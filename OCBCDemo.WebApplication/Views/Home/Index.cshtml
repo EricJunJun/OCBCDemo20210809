@@ -1,0 +1,199 @@
+﻿
+@using OCBCDemo.Business.Common.Utility.Pagination
+@{
+    ViewBag.Title = "Home Page";
+    var Model = (OCBCDemo.Business.Entity.CurrentUser)@HttpContext.Current.Session["CurrentUser"];
+}
+
+@if (Model == null)
+{
+    <div class="jumbotron">
+        <h3>Welcome to the OCBC ASP.NET MVC demo application</h3>
+        <br />
+        <p class="lead">Please register or login to start testing.</p>
+        <br />
+        <br />
+    </div>
+}
+else
+{
+    <input type="text" hidden="hidden" id="AccountId" value="@Model.AccountId">
+    <h2>Summary</h2>
+    <div class="jumbotron">
+        <div>
+            <form id="depositForm">
+                <div class="row">
+                    <span class="text-primary">Balance : </span> <input type="number" id="Balance" disabled="disabled" value="@Model.Balance" />
+                </div>
+                <br />
+                <br />
+                <div class="row">
+                    <h5>Please Deposit Your Money: </h5>
+                </div>
+                <div class="row">
+                    <span class="text-primary">$</span>
+                    <input type="number" required="required" maxlength="6" oninput="if(value.length>6)value=value.slice(0,6)" class="text-primary" id="depositAmount">
+                    &nbsp; <input type="submit" value="Deposit" class="btn btn-primary btn-xs" id="deposit" />
+                </div><br />
+            </form>
+        </div>
+        <br />
+        <div>
+            <form id="transferForm">
+                <div class="input-group">
+                    <div class="row">
+                        <h5>Please Input Recipient Email To Transfer Money: </h5>
+                    </div>
+                    <div class="row">
+                        <span class="text-primary">Recipient Email : </span>
+                        <input type="text" class="" required="required" maxlength="20" oninput="if(value.length>20)value=value.slice(0,20)" id="recipientEmail" />
+
+                        <span class="text-primary"> &nbsp;&nbsp;  $</span>
+                        <input type="number" required="required" maxlength="5" oninput="if(value.length>6)value=value.slice(0,5)" class="text-primary" id="transferAmount">
+                        &nbsp;<input type="submit" value="Transfer" class="btn btn-primary  btn-xs" id="transfer" />
+                    </div><br />
+                </div>
+            </form>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <h2>Transaction History</h2>
+    <div class="jumbotron">
+        <div class="row">
+            <span class="text-primary">
+                Find by Condition:
+            </span>
+            @Html.TextBox("searchString", @Model?.TransferHistory?.SearchString, new { @class = "form-control", @Style = "display:inline" })
+            <input type="button" id="search" class="btn btn-primary btn-xs" value="Search" />
+        </div><br />
+        <div id="transactionHistory"></div>
+        @*@Html.Partial("_TransactionList", Model?.TransferHistory)*@
+    </div>
+
+}
+
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Getting started</h2>
+        <p>
+            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
+            enables a clean separation of concerns and gives you full control over markup
+            for enjoyable, agile development.
+        </p>
+        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Get more libraries</h2>
+        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
+        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Web Hosting</h2>
+        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
+        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
+    </div>
+</div>
+
+@section scripts
+{
+    <script>
+        var errors = [];
+
+        $("#search").click(function () {
+          $.ajax({
+                    url: '@Url.Action("GetTransactionHistory", "Home")',
+                    type: "GET",
+              data: { searchString: $("#searchString").val()},
+                    success: function (result) {
+                        $("#transactionHistory").html(result);
+                    }
+                });
+        });
+
+        $("#deposit").click(function (e) {
+            $("#message").html('');
+            e.preventDefault();
+
+            if (parseFloat($("#depositAmount").val())<=0) {
+                setValidationMessageSummary("message", "Value should be greater than 0.")
+                return;
+            }
+            if (parseFloat($("#depositAmount").val())> 999999) {
+                setValidationMessageSummary("message", "Value should be less than 999999.")
+                return;
+            }
+           $.ajax({
+                    url: '@Url.Action("Deposit", "Home")',
+                    type: "POST",
+                    data: { accountId: $("#AccountId").val(), amount: $("#depositAmount").val()},
+                    success: function (result) {
+                        if (result.HasError) {
+                            setValidationMessageSummary("message", result.Message);
+                        } else {
+                            $("#Balance").val(result.Balance);
+                            $("#depositAmount").val('');
+                            setSuccessMessage("message", result.Message)
+                        }
+                    }
+                });
+        });
+
+        $("#transfer").click(function (e) {
+            $("#message").html('');
+            e.preventDefault();
+
+            if (parseFloat($("#transferAmount").val()) <= 0) {
+                setValidationMessageSummary("message", "Value should be greater than 0.");
+                return;
+            }
+
+            if (parseFloat($("#transferAmount").val()) > parseFloat($("#Balance").val())) {
+                setValidationMessageSummary("message", "Cannot tranfer more than your balance value.")
+                return;
+            }
+
+           $.ajax({
+                    url: '@Url.Action("Transfer", "Home")',
+                    type: "POST",
+                    data: { accountId: $("#AccountId").val(), recipientEmail: $("#recipientEmail").val(), transferAmount: parseFloat($("#transferAmount").val()) },
+                    success: function (result) {
+                        if (result.HasError) {
+                            setValidationMessageSummary("message", result.Message);
+                        } else {
+                            $("#Balance").val(result.Balance);
+                            $("#transferAmount").val('');
+                            $("#recipientEmail").val('');
+                            setSuccessMessage("message", result.Message)
+                        }
+                    }
+                });
+           }
+        );
+
+        function setSuccessMessage(idName, messages) {
+            var html = "";
+            if (typeof (messages) != "object") {
+                html += "<div><span style=\"color\:green\">" + messages + "</span></div>";
+            } else {
+                $.each(messages, function (key, name) {
+                    html += "<div><span style=\"color\:green\">" + name + "</span></div>";
+                });
+            }
+            $('#' + idName).html(html);
+        }
+
+        function setValidationMessageSummary(idName, messages) {
+            var html = "";
+            if (typeof (messages) != "object") {
+                html += "<div><span style=\"color\:red\">" + messages + "</span></div>";
+            } else {
+                $.each(messages, function (key, name) {
+                    html += "<div><span style=\"color\:red\">" + name + "</span></div>";
+                });
+            }
+            $('#' + idName).html(html);
+        }
+    </script>
+}

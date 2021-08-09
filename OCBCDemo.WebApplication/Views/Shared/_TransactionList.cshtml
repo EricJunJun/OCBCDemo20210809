@@ -1,0 +1,58 @@
+﻿
+@using OCBCDemo.Business.DataAccess
+@using OCBCDemo.Business.Common.Utility.Pagination
+
+@{
+    ViewData["Title"] = "ViewList";
+}
+
+@model CustomPageModel<TransferHistory>
+@using (Html.BeginForm("GetTransactionHistory", "Home", FormMethod.Get, new { @class = "form-inline" }))
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    Name
+                    @*@Html.DisplayNameFor(model => "Name")*@
+                </th>
+                <th>
+                    CreateTime
+                    @*@Html.DisplayNameFor(model => "CreateTime")*@
+                </th>
+                <th>
+                    LastModifyTime
+                    @*@Html.DisplayNameFor(model => "LastModifyTime")*@
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.DataList)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.RecipientEmail)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TransferDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TransferAmount)
+                    </td>
+                    <td>
+                        @*<a asp-action="Edit" asp-route-id="@item.Id">Edit</a> *@
+                        <a asp-action="Details" asp-route-id="@item.Id">Details</a> 
+                        @*<a asp-action="Delete" asp-route-id="@item.Id">Delete</a>*@
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <CustomPager total="@Model.RecordCount"
+                 page-index="@Model.PageIndex"
+                 page-size="@Model.PageSize"
+                 route-url="/Home/GetTransactionHistory"
+                 query="SearchString=@Model.SearchString">
+    </CustomPager>
+}

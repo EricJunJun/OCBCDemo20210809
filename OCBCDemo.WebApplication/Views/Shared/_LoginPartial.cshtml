@@ -1,0 +1,23 @@
+﻿@using OCBCDemo.Business.Entity;
+
+@if (base.Context.Session["CurrentUser"] != null && base.Context.Session["CurrentUser"] is CurrentUser)
+{
+    using (Html.BeginForm("Logout", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                @Html.ActionLink("Hello " + ((CurrentUser)Context.Session["CurrentUser"]).Name + "!", "Index", "Home", routeValues: null, htmlAttributes: new { title = ((CurrentUser)Context.Session["CurrentUser"]).Name })
+            </li>
+            <li><a href="javascript:document.getElementById('logoutForm').submit()">Logout</a></li>
+        </ul>
+    }
+}
+else
+{
+<ul class="nav navbar-nav navbar-right">
+    <li>@Html.ActionLink("Login", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" })</li>
+    <li>@Html.ActionLink("Register", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink" })</li>
+</ul>
+}
